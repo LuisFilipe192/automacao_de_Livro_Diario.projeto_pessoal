@@ -1,0 +1,1 @@
+# automa-o_de_Livro_Diario.projeto_pessoal
