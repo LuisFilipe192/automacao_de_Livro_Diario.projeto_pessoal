@@ -2,7 +2,9 @@
 
 Projeto de automação desenvolvido em **Python** para gerar automaticamente um **Livro Diário em Excel** a partir de arquivos PDF de rateio e arquivos Excel de Movimentos de Caixa.
 
-O sistema lê o PDF, extrai as informações relevantes e organiza os dados em uma planilha estruturada com cálculos automáticos de saldo.
+O sistema lê o PDF e o Excel, extrai as informações relevantes e organiza os dados em uma planilha estruturada com cálculos automáticos de saldo.
+
+Deixando claro que os documentos seguem um padrão e esse script nao vai ler todos os documentos da mesma forma.
 
 ---
 
