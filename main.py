@@ -2,11 +2,10 @@ import pdfplumber
 from openpyxl import Workbook, load_workbook
 from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
 from openpyxl.worksheet.page import PageMargins
+from openpyxl.worksheet.pagebreak import Break
 from datetime import datetime
 import calendar
 
-#DEF(1) QUEBRA DE LINHA MANUAL/ESTILO WORD PARA EXCEL CUIDA
-# =========================
 def quebrar_texto_word(texto: str, max_chars: int = 52) -> str:
     if not texto:
         return ""
@@ -34,8 +33,6 @@ def quebrar_texto_word(texto: str, max_chars: int = 52) -> str:
 
     return "\n".join(linhas)
 
-# DEF(1) LEITURA DAS ENTRADAS DO PDF DOC. CUIDA
-# =====================================================================================================================
 def ler_entradas_pdf(caminho_pdf: str) -> dict:
     texto_completo = ""
     dados_entradas = {}
@@ -67,8 +64,6 @@ def ler_entradas_pdf(caminho_pdf: str) -> dict:
 
     return dados_entradas
 
-# DEF(2) LEITURA DAS SAIDAS EXCEL DOC.
-# ===========================================================================================================================
 def ler_saidas_excel(caminho_excel_saidas: str) -> dict:
     wb_saida = load_workbook(caminho_excel_saidas, data_only=True)
     ws_saida = wb_saida.active
@@ -78,7 +73,7 @@ def ler_saidas_excel(caminho_excel_saidas: str) -> dict:
     for row in ws_saida.iter_rows(min_row=2, values_only=True):
         data = row[0]
         descricao = row[5]
-        valor = row[17]  
+        valor = row[17]
 
         if isinstance(data, datetime) and isinstance(valor, (int, float)) and descricao:
             data_str = data.strftime("%d/%m/%Y")
@@ -95,10 +90,6 @@ def ler_saidas_excel(caminho_excel_saidas: str) -> dict:
 
     return dados_saidas
 
-
-
-# DEF(3) RELACIONAR E JUNTAR POR DATA
-# ==============================================================================================================================
 def juntar_movimentos_por_data(entradas: dict, saidas: dict) -> dict:
     todas_datas = set(entradas.keys()) | set(saidas.keys())
     dados = {}
@@ -109,8 +100,6 @@ def juntar_movimentos_por_data(entradas: dict, saidas: dict) -> dict:
         dados[data] = movs
     return dados
 
-# DEF(4) GERAR O LIVRO DIÁRIO AND RESUMO NO FINAL
-# ===========================================================================================================
 def gerar_livro_diario(dados: dict, nome_saida: str, max_chars_saida: int = 52):
     wb = Workbook()
     ws = wb.active
@@ -121,13 +110,32 @@ def gerar_livro_diario(dados: dict, nome_saida: str, max_chars_saida: int = 52):
     alinhamento_centro = Alignment(horizontal="center", vertical="center")
 
     borda_fina = Border(
-        left=Side(style='thin'), right=Side(style='thin'),
-        top=Side(style='thin'), bottom=Side(style='thin')
+        left=Side(style='thin'),
+        right=Side(style='thin'),
+        top=Side(style='thin'),
+        bottom=Side(style='thin')
     )
 
-    borda_esquerda_vazia = Border(left=Side(style='thin'))
-    borda_direita_vazia = Border(right=Side(style='thin'))
-    sem_borda = Border()
+    borda_cabecalho = Border(
+        left=Side(style='thin'),
+        right=Side(style='thin'),
+        top=Side(style='thin'),
+        bottom=Side(style='thin')
+    )
+
+    borda_verde_esquerda = Border(
+        left=Side(style='thin'),
+        bottom=Side(style='thin')
+    )
+
+    borda_verde_meio = Border(
+        bottom=Side(style='thin')
+    )
+
+    borda_verde_direita = Border(
+        right=Side(style='thin'),
+        bottom=Side(style='thin')
+    )
 
     alinhamento_desc_entrada = Alignment(horizontal="left", vertical="center", wrap_text=False)
     alinhamento_desc_saida = Alignment(horizontal="left", vertical="top", wrap_text=True)
@@ -156,7 +164,7 @@ def gerar_livro_diario(dados: dict, nome_saida: str, max_chars_saida: int = 52):
             celula = ws.cell(row=linha_excel_atual, column=col, value=texto)
             celula.font = fonte_padrao
             celula.alignment = alinhamento_centro
-            celula.border = borda_fina
+            celula.border = borda_cabecalho
         ws.row_dimensions[linha_excel_atual].height = 15
         linha_excel_atual += 1
 
@@ -273,20 +281,22 @@ def gerar_livro_diario(dados: dict, nome_saida: str, max_chars_saida: int = 52):
             celula_vazia = ws.cell(row=linha_excel_atual, column=col)
             celula_vazia.fill = estilo_colorido
             if col == 1:
-                celula_vazia.border = borda_esquerda_vazia
+                celula_vazia.border = borda_verde_esquerda
             elif col == 5:
-                celula_vazia.border = borda_direita_vazia
+                celula_vazia.border = borda_verde_direita
             else:
-                celula_vazia.border = sem_borda
+                celula_vazia.border = borda_verde_meio
 
         ws.row_dimensions[linha_excel_atual].height = 15
+
+        ws.row_breaks.append(Break(id=linha_excel_atual))
+
         linha_excel_atual += 1
 
         status = "Movimento do dia" if (entrada_dia != 0 or saida_dia != 0) else "Sem Movimento"
         resumo_mensal.append((data, status, entrada_dia, saida_dia))
 
-    # ================================================================================================================
-    # RESUMO NO FINAL DOS DIAS/ESTILO
+
     ws.merge_cells(start_row=linha_excel_atual, start_column=1, end_row=linha_excel_atual, end_column=5)
     c_titulo = ws.cell(row=linha_excel_atual, column=1, value="RESUMO")
     c_titulo.font = fonte_padrao
@@ -357,11 +367,11 @@ def gerar_livro_diario(dados: dict, nome_saida: str, max_chars_saida: int = 52):
         cel = ws.cell(row=linha_excel_atual, column=col)
         cel.fill = estilo_colorido
         if col == 1:
-            cel.border = borda_esquerda_vazia
+            cel.border = borda_verde_esquerda
         elif col == 5:
-            cel.border = borda_direita_vazia
+            cel.border = borda_verde_direita
         else:
-            cel.border = sem_borda
+            cel.border = borda_verde_meio
 
     ws.row_dimensions[linha_excel_atual].height = 15
     linha_excel_atual += 1
@@ -389,14 +399,14 @@ def gerar_livro_diario(dados: dict, nome_saida: str, max_chars_saida: int = 52):
 
     wb.save(nome_saida)
 
-caminho_pdf = "RateioPeriodo_Report REF 03-2025.pdf"
-caminho_excel_saidas = "Movimento do Caixa REF 03-2025.xlsx"
+caminho_pdf = "2026.06 Rateio por período remessa Confirmada.pdf"
+caminho_excel_saidas = "Movimento do Caixa ref 06-2026.xlsx"
 
 entradas = ler_entradas_pdf(caminho_pdf)
 saidas = ler_saidas_excel(caminho_excel_saidas)
 
 dados_unificados = juntar_movimentos_por_data(entradas, saidas)
 
-gerar_livro_diario(dados_unificados, "LIVRO DIARIO - 03-25.xlsx", max_chars_saida=52)
+gerar_livro_diario(dados_unificados, "LIVRO DIARIO - 06-2026.xlsx", max_chars_saida=52)
 
 print("criado, cuida")
