@@ -32,9 +32,9 @@ Automatizar um processo manual recorrente que exigia tempo elevado e estava suje
 > Exemplo de estrutura (ajuste para o seu nome de arquivos):
 📁 automacao-livro-diario  
 ├── main.py  
-├── RateioPeriodo_Report REF 02-2025.pdf
-├── Movimento_do_Caixa REF 02-2025.xlsx
-├── livro_diario.xlsx  
+├── RateioPeriodo_Report REF 02-2025.pdf    
+├── Movimento_do_Caixa REF 02-2025.xlsx    
+├── livro_diario.xlsx     
 ├── .gitignore  
 └── README.md  
 
